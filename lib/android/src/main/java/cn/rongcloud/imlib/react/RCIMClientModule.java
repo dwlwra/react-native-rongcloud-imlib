@@ -2,6 +2,7 @@ package cn.rongcloud.imlib.react;
 
 import com.facebook.react.bridge.*;
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter;
+
 import io.rong.imlib.CustomServiceConfig;
 import io.rong.imlib.CustomServiceConfig.CSEvaSolveStatus;
 import io.rong.imlib.ICustomServiceListener;
@@ -25,6 +26,7 @@ import io.rong.message.MediaMessageContent;
 import io.rong.message.RecallNotificationMessage;
 
 import javax.annotation.Nonnull;
+
 import java.util.*;
 
 import static cn.rongcloud.imlib.react.Convert.*;
@@ -142,6 +144,20 @@ public class RCIMClientModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void connect(String token, final String eventId) {
         RongIMClient.connect(token, new RongIMClient.ConnectCallback() {
+
+            /**
+             * 数据库回调.
+             * @param databaseOpenStatus 数据库打开状态. DATABASE_OPEN_SUCCESS 数据库打开成功; DATABASE_OPEN_ERROR 数据库打开失败
+             */
+            @Override
+            public void onDatabaseOpened(DatabaseOpenStatus databaseOpenStatus) {
+                eventEmitter.emit("rcimlib-connect", createEventMap(eventId, "databaseOpenStatus " + databaseOpenStatus.getValue()));
+            }
+
+            /**
+             * 成功回调
+             * @param userId 当前用户 ID
+             */
             @Override
             public void onSuccess(String userId) {
                 WritableMap map = createEventMap(eventId, "success");
@@ -149,17 +165,15 @@ public class RCIMClientModule extends ReactContextBaseJavaModule {
                 eventEmitter.emit("rcimlib-connect", map);
             }
 
+            /**
+             * 错误回调
+             * @param errorCode 错误码
+             */
             @Override
-            public void onError(RongIMClient.ErrorCode error) {
+            public void onError(RongIMClient.ConnectionErrorCode errorCode) {
                 WritableMap map = createEventMap(eventId, "error");
-                map.putInt("errorCode", error.getValue());
-                map.putString("errorMessage", error.getMessage());
+                map.putInt("errorCode", errorCode.getValue());
                 eventEmitter.emit("rcimlib-connect", map);
-            }
-
-            @Override
-            public void onTokenIncorrect() {
-                eventEmitter.emit("rcimlib-connect", createEventMap(eventId, "tokenIncorrect"));
             }
         });
     }
