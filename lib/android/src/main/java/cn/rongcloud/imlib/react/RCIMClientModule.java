@@ -1,7 +1,23 @@
 package cn.rongcloud.imlib.react;
 
-import com.facebook.react.bridge.*;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.Promise;
+import com.facebook.react.bridge.ReactApplicationContext;
+import com.facebook.react.bridge.ReactContextBaseJavaModule;
+import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableArray;
+import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.WritableArray;
+import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.annotation.Nonnull;
 
 import io.rong.imlib.CustomServiceConfig;
 import io.rong.imlib.CustomServiceConfig.CSEvaSolveStatus;
@@ -11,43 +27,97 @@ import io.rong.imlib.IRongCallback.IDownloadMediaMessageCallback;
 import io.rong.imlib.IRongCallback.ISendMediaMessageCallback;
 import io.rong.imlib.RongCommonDefine.GetMessageDirection;
 import io.rong.imlib.RongIMClient;
-import io.rong.imlib.RongIMClient.*;
+import io.rong.imlib.RongIMClient.BlacklistStatus;
+import io.rong.imlib.RongIMClient.ConnectionStatusListener;
+import io.rong.imlib.RongIMClient.CreateDiscussionCallback;
+import io.rong.imlib.RongIMClient.DatabaseOpenStatus;
+import io.rong.imlib.RongIMClient.DiscussionInviteStatus;
+import io.rong.imlib.RongIMClient.ErrorCode;
+import io.rong.imlib.RongIMClient.GetBlacklistCallback;
+import io.rong.imlib.RongIMClient.GetNotificationQuietHoursCallback;
+import io.rong.imlib.RongIMClient.OnRecallMessageListener;
+import io.rong.imlib.RongIMClient.OnReceiveMessageWrapperListener;
+import io.rong.imlib.RongIMClient.OperationCallback;
+import io.rong.imlib.RongIMClient.RCLogInfoListener;
+import io.rong.imlib.RongIMClient.ReadReceiptListener;
+import io.rong.imlib.RongIMClient.ResultCallback;
+import io.rong.imlib.RongIMClient.SearchType;
+import io.rong.imlib.RongIMClient.TimestampOrder;
+import io.rong.imlib.RongIMClient.TypingStatusListener;
 import io.rong.imlib.location.RealTimeLocationConstant.RealTimeLocationErrorCode;
 import io.rong.imlib.location.RealTimeLocationConstant.RealTimeLocationStatus;
-import io.rong.imlib.model.*;
+import io.rong.imlib.model.CSGroupItem;
+import io.rong.imlib.model.ChatRoomInfo;
 import io.rong.imlib.model.ChatRoomInfo.ChatRoomMemberOrder;
+import io.rong.imlib.model.ChatRoomMemberInfo;
+import io.rong.imlib.model.Conversation;
 import io.rong.imlib.model.Conversation.ConversationNotificationStatus;
 import io.rong.imlib.model.Conversation.ConversationType;
 import io.rong.imlib.model.Conversation.PublicServiceType;
+import io.rong.imlib.model.CustomServiceMode;
+import io.rong.imlib.model.Discussion;
+import io.rong.imlib.model.Message;
 import io.rong.imlib.model.Message.ReceivedStatus;
 import io.rong.imlib.model.Message.SentStatus;
+import io.rong.imlib.model.MessageContent;
+import io.rong.imlib.model.PublicServiceProfile;
+import io.rong.imlib.model.PublicServiceProfileList;
+import io.rong.imlib.model.SearchConversationResult;
 import io.rong.imlib.typingmessage.TypingStatus;
 import io.rong.message.MediaMessageContent;
 import io.rong.message.RecallNotificationMessage;
 
-import javax.annotation.Nonnull;
-
-import java.util.*;
-
-import static cn.rongcloud.imlib.react.Convert.*;
-import static cn.rongcloud.imlib.react.Utils.*;
+import static cn.rongcloud.imlib.react.Convert.toCSCustomServiceInfo;
+import static cn.rongcloud.imlib.react.Convert.toConversationTypeArray;
+import static cn.rongcloud.imlib.react.Convert.toJSON;
+import static cn.rongcloud.imlib.react.Convert.toMessage;
+import static cn.rongcloud.imlib.react.Convert.toMessageContent;
+import static cn.rongcloud.imlib.react.Convert.toStringArray;
+import static cn.rongcloud.imlib.react.Convert.toStringList;
+import static cn.rongcloud.imlib.react.Utils.createBooleanCallback;
+import static cn.rongcloud.imlib.react.Utils.createConversationListCallback;
+import static cn.rongcloud.imlib.react.Utils.createConversationNotificationStatusCallback;
+import static cn.rongcloud.imlib.react.Utils.createEventMap;
+import static cn.rongcloud.imlib.react.Utils.createMessageCallback;
+import static cn.rongcloud.imlib.react.Utils.createMessagesCallback;
+import static cn.rongcloud.imlib.react.Utils.createOperationCallback;
+import static cn.rongcloud.imlib.react.Utils.createPublicServiceProfileListCallback;
+import static cn.rongcloud.imlib.react.Utils.reject;
 
 @SuppressWarnings("unused")
 public class RCIMClientModule extends ReactContextBaseJavaModule {
     private RCTDeviceEventEmitter eventEmitter;
     private ReactApplicationContext reactContext;
+    private final static String TAG = RCIMClientModule.class.getSimpleName();
 
     RCIMClientModule(final ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
         Convert.reactContext = reactContext;
 
-        RongIMClient.setOnReceiveMessageListener(new OnReceiveMessageListener() {
+        RongIMClient.setOnReceiveMessageListener(new OnReceiveMessageWrapperListener() {
+            /**
+             * 接收实时或者离线消息。
+             * 注意:
+             * 1. 针对接收离线消息时，服务端会将 200 条消息打成一个包发到客户端，客户端对这包数据进行解析。
+             * 2. hasPackage 标识是否还有剩余的消息包，left 标识这包消息解析完逐条抛送给 App 层后，剩余多少条。
+             * 如何判断离线消息收完：
+             * 1. hasPackage 和 left 都为 0；
+             * 2. hasPackage 为 0 标识当前正在接收最后一包（200条）消息，left 为 0 标识最后一包的最后一条消息也已接收完毕。
+             *
+             * @param message    接收到的消息对象
+             * @param left       每个数据包数据逐条上抛后，还剩余的条数
+             * @param hasPackage 是否在服务端还存在未下发的消息包
+             * @param offline    消息是否离线消息
+             * @return 是否处理消息。 如果 App 处理了此消息，返回 true; 否则返回 false 由 SDK 处理。
+             */
             @Override
-            public boolean onReceived(Message message, int left) {
+            public boolean onReceived(Message message, int left, boolean hasPackage, boolean offline) {
                 WritableMap map = Arguments.createMap();
                 map.putMap("message", toJSON(message));
                 map.putInt("left", left);
+                map.putBoolean("hasPackage", hasPackage);
+                map.putBoolean("offline", offline);
                 eventEmitter.emit("rcimlib-receive-message", map);
                 return false;
             }
@@ -151,7 +221,9 @@ public class RCIMClientModule extends ReactContextBaseJavaModule {
              */
             @Override
             public void onDatabaseOpened(DatabaseOpenStatus databaseOpenStatus) {
-                eventEmitter.emit("rcimlib-connect", createEventMap(eventId, "databaseOpenStatus " + databaseOpenStatus.getValue()));
+                WritableMap map = createEventMap(eventId, "databaseOpenStatus");
+                map.putInt("databaseOpenStatus", databaseOpenStatus.getValue());
+                eventEmitter.emit("rcimlib-connect", map);
             }
 
             /**

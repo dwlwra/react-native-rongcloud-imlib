@@ -1,38 +1,38 @@
-import { NativeEventEmitter, NativeModules } from "react-native";
+import {NativeEventEmitter, NativeModules} from "react-native";
 import {
-  ConnectionStatus,
-  ConversationType,
-  ErrorCode,
-  Message,
-  ObjectName,
-  PublicServiceType,
-  RecallNotificationMessage,
-  ReceiptRequest,
-  ReceiveMessage,
-  SentMessage,
-  TypingStatus,
-  ConnectErrorCode,
-  Conversation,
-  MessageContent,
-  PublicServiceProfile,
-  ReceiptResponse,
-  SearchType,
-  SentStatus,
-  SearchConversationResult,
-  TimestampOrder,
-  ChatRoomMemberOrder,
-  ChatRoomInfo,
-  Discussion,
-  RealTimeLocationStatus,
-  CSConfig,
-  CSMode,
-  CSGroupItem,
-  CSInfo,
-  CSResolveStatus,
-  CSLeaveMessageItem,
-  PushLanguage,
-  PushNotificationMessage,
-  MessageObjectNames
+    ConnectionStatus,
+    ConversationType,
+    ErrorCode,
+    Message,
+    ObjectName,
+    PublicServiceType,
+    RecallNotificationMessage,
+    ReceiptRequest,
+    ReceiveMessage,
+    SentMessage,
+    TypingStatus,
+    ConnectErrorCode,
+    Conversation,
+    MessageContent,
+    PublicServiceProfile,
+    ReceiptResponse,
+    SearchType,
+    SentStatus,
+    SearchConversationResult,
+    TimestampOrder,
+    ChatRoomMemberOrder,
+    ChatRoomInfo,
+    Discussion,
+    RealTimeLocationStatus,
+    CSConfig,
+    CSMode,
+    CSGroupItem,
+    CSInfo,
+    CSResolveStatus,
+    CSLeaveMessageItem,
+    PushLanguage,
+    PushNotificationMessage,
+    MessageObjectNames
 } from "./types";
 
 export * from "./types";
@@ -46,7 +46,7 @@ const eventEmitter = new NativeEventEmitter(RCIMClient);
  * @param appKey 从融云开发者平台创建应用后获取到的 App Key
  */
 export function init(appKey: string) {
-  RCIMClient.init(appKey);
+    RCIMClient.init(appKey);
 }
 
 /**
@@ -55,7 +55,7 @@ export function init(appKey: string) {
  * @param listener
  */
 export function addLogInfoListener(listener: (logInfo: string) => void) {
-  return eventEmitter.addListener("rcimlib-log", listener);
+    return eventEmitter.addListener("rcimlib-log", listener);
 }
 
 /**
@@ -64,7 +64,7 @@ export function addLogInfoListener(listener: (logInfo: string) => void) {
  * @param listener
  */
 export function addRecallMessageListener(listener: (messageId: string) => void) {
-  return eventEmitter.addListener("rcimlib-recall", listener);
+    return eventEmitter.addListener("rcimlib-recall", listener);
 }
 
 /**
@@ -75,11 +75,11 @@ export function addRecallMessageListener(listener: (messageId: string) => void) 
  * @param timestamp 该会话中已读的最后一条消息的发送时间戳
  */
 export function syncConversationReadStatus(
-  conversationType: ConversationType,
-  targetId: string,
-  timestamp: number
+    conversationType: ConversationType,
+    targetId: string,
+    timestamp: number
 ): Promise<void> {
-  return RCIMClient.syncConversationReadStatus(conversationType, targetId, timestamp);
+    return RCIMClient.syncConversationReadStatus(conversationType, targetId, timestamp);
 }
 
 /**
@@ -92,7 +92,7 @@ export function syncConversationReadStatus(
  *   获取到的deviceToken，转为NSString类型，并去掉其中的空格和尖括号，作为参数传入此方法。
  */
 export function setDeviceToken(deviceToken: string) {
-  RCIMClient.setDeviceToken(deviceToken);
+    RCIMClient.setDeviceToken(deviceToken);
 }
 
 /**
@@ -102,7 +102,7 @@ export function setDeviceToken(deviceToken: string) {
  * @param fileServer 文件服务器地址
  */
 export function setServerInfo(naviServer: string, fileServer: string) {
-  RCIMClient.setServerInfo(naviServer, fileServer);
+    RCIMClient.setServerInfo(naviServer, fileServer);
 }
 
 /**
@@ -118,7 +118,7 @@ export function setServerInfo(naviServer: string, fileServer: string) {
  * @param server 服务地址
  */
 export function setStatisticServer(server: string) {
-  RCIMClient.setStatisticServer(server);
+    RCIMClient.setStatisticServer(server);
 }
 
 /**
@@ -134,25 +134,26 @@ export function setStatisticServer(server: string) {
  * @param tokenIncorrect token 错误或过期回调函数
  */
 export function connect(
-  token: string,
-  success: (userId: string) => void = null,
-  error: (errorCode: ConnectErrorCode) => void = null,
-  tokenIncorrect: () => void = null
+    token: string,
+    success: (userId: string) => void = null,
+    error: (errorCode: ConnectErrorCode) => void = null,
+    tokenIncorrect: (databaseOpenStatus: number) => void = null
 ) {
-  const eventId = Math.random().toString();
-  const listener = eventEmitter.addListener("rcimlib-connect", data => {
-    if (data.eventId === eventId) {
-      if (data.type === "success") {
-        success && success(data.userId);
-      } else if (data.type === "error") {
-        error && error(data.errorCode);
-      } else if (data.type === "tokenIncorrect") {
-        tokenIncorrect && tokenIncorrect();
-      }
-      listener.remove();
-    }
-  });
-  RCIMClient.connect(token, eventId);
+    const eventId = Math.random().toString();
+    const listener = eventEmitter.addListener("rcimlib-connect", data => {
+        if (data.eventId === eventId) {
+            if (data.type === "success") {
+                success && success(data.userId);
+                listener.remove();
+            } else if (data.type === "error") {
+                error && error(data.errorCode);
+                listener.remove();
+            } else if (data.type === "databaseOpenStatus") {
+                tokenIncorrect && tokenIncorrect(data.databaseOpenStatus);
+            }
+        }
+    });
+    RCIMClient.connect(token, eventId);
 }
 
 /**
@@ -161,55 +162,55 @@ export function connect(
  * @param isReceivePush 是否还接收推送
  */
 export function disconnect(isReceivePush = true) {
-  RCIMClient.disconnect(isReceivePush);
+    RCIMClient.disconnect(isReceivePush);
 }
 
 /**
  * 获取当前连接状态
  */
 export function getConnectionStatus(): Promise<ConnectionStatus> {
-  return RCIMClient.getConnectionStatus();
+    return RCIMClient.getConnectionStatus();
 }
 
 /**
  * 添加消息监听函数
  */
 export function addReceiveMessageListener(listener: (message: ReceiveMessage) => void) {
-  return eventEmitter.addListener("rcimlib-receive-message", listener);
+    return eventEmitter.addListener("rcimlib-receive-message", listener);
 }
 
 /**
  * 发送消息回调
  */
 export interface SentMessageCallback {
-  success?: (messageId: number) => void;
-  progress?: (progress: number, messageId: number) => void;
-  cancel?: () => void;
-  error?: (errorCode: ErrorCode, messageId: number, errorMessage?: string) => void;
+    success?: (messageId: number) => void;
+    progress?: (progress: number, messageId: number) => void;
+    cancel?: () => void;
+    error?: (errorCode: ErrorCode, messageId: number, errorMessage?: string) => void;
 }
 
 function handleSendMessageCallback(callback: SentMessageCallback): string {
-  const eventId = Math.random().toString();
-  if (callback) {
-    const listener = eventEmitter.addListener("rcimlib-send-message", data => {
-      if (data.eventId === eventId) {
-        const { success, error, cancel, progress } = callback;
-        if (data.type === "success") {
-          success && success(data.messageId);
-          listener.remove();
-        } else if (data.type === "error") {
-          error && error(data.errorCode, data.messageId, data.errorMessage);
-          listener.remove();
-        } else if (data.type === "cancel") {
-          cancel && cancel();
-          listener.remove();
-        } else if (data.type === "progress") {
-          progress && progress(data.progress, data.messageId);
-        }
-      }
-    });
-  }
-  return eventId;
+    const eventId = Math.random().toString();
+    if (callback) {
+        const listener = eventEmitter.addListener("rcimlib-send-message", data => {
+            if (data.eventId === eventId) {
+                const {success, error, cancel, progress} = callback;
+                if (data.type === "success") {
+                    success && success(data.messageId);
+                    listener.remove();
+                } else if (data.type === "error") {
+                    error && error(data.errorCode, data.messageId, data.errorMessage);
+                    listener.remove();
+                } else if (data.type === "cancel") {
+                    cancel && cancel();
+                    listener.remove();
+                } else if (data.type === "progress") {
+                    progress && progress(data.progress, data.messageId);
+                }
+            }
+        });
+    }
+    return eventId;
 }
 
 /**
@@ -219,8 +220,8 @@ function handleSendMessageCallback(callback: SentMessageCallback): string {
  * @param callback 回调
  */
 export function sendMessage(message: SentMessage, callback: SentMessageCallback = {}) {
-  message.content = handleMessageContent(message.content);
-  RCIMClient.sendMessage(message, handleSendMessageCallback(callback));
+    message.content = handleMessageContent(message.content);
+    RCIMClient.sendMessage(message, handleSendMessageCallback(callback));
 }
 
 /**
@@ -230,8 +231,8 @@ export function sendMessage(message: SentMessage, callback: SentMessageCallback 
  * @param callback 回调
  */
 export function sendMediaMessage(message: SentMessage, callback: SentMessageCallback = {}) {
-  message.content = handleMessageContent(message.content);
-  RCIMClient.sendMediaMessage(message, handleSendMessageCallback(callback));
+    message.content = handleMessageContent(message.content);
+    RCIMClient.sendMediaMessage(message, handleSendMessageCallback(callback));
 }
 
 /**
@@ -242,12 +243,12 @@ export function sendMediaMessage(message: SentMessage, callback: SentMessageCall
  * @param callback 回调
  */
 export function sendDirectionalMessage(
-  message: SentMessage,
-  userIdList: string[],
-  callback: SentMessageCallback
+    message: SentMessage,
+    userIdList: string[],
+    callback: SentMessageCallback
 ) {
-  message.content = handleMessageContent(message.content);
-  RCIMClient.sendDirectionalMessage(message, handleSendMessageCallback(callback));
+    message.content = handleMessageContent(message.content);
+    RCIMClient.sendDirectionalMessage(message, handleSendMessageCallback(callback));
 }
 
 /**
@@ -257,10 +258,10 @@ export function sendDirectionalMessage(
  * @param pushContent 推送内容
  */
 export function recallMessage(
-  messageId: number,
-  pushContent = ""
+    messageId: number,
+    pushContent = ""
 ): Promise<RecallNotificationMessage> {
-  return RCIMClient.recallMessage(messageId, pushContent);
+    return RCIMClient.recallMessage(messageId, pushContent);
 }
 
 /**
@@ -271,18 +272,18 @@ export function recallMessage(
  * @param typingContentType 输入内容类型
  */
 export function sendTypingStatus(
-  conversationType: ConversationType,
-  targetId: string,
-  typingContentType: string
+    conversationType: ConversationType,
+    targetId: string,
+    typingContentType: string
 ) {
-  RCIMClient.sendTypingStatus(conversationType, targetId, typingContentType);
+    RCIMClient.sendTypingStatus(conversationType, targetId, typingContentType);
 }
 
 /**
  * 添加输入状态监听函数
  */
 export function addTypingStatusListener(listener: (status: TypingStatus) => void) {
-  return eventEmitter.addListener("rcimlib-typing-status", listener);
+    return eventEmitter.addListener("rcimlib-typing-status", listener);
 }
 
 /**
@@ -292,7 +293,7 @@ export function addTypingStatusListener(listener: (status: TypingStatus) => void
  * @param status 状态
  */
 export function setMessageSentStatus(messageId: number, status: SentStatus): Promise<void> {
-  return RCIMClient.setMessageSentStatus(messageId, status);
+    return RCIMClient.setMessageSentStatus(messageId, status);
 }
 
 /**
@@ -302,7 +303,7 @@ export function setMessageSentStatus(messageId: number, status: SentStatus): Pro
  * @param status 状态
  */
 export function setMessageReceivedStatus(messageId: number, status: number): Promise<void> {
-  return RCIMClient.setMessageReceivedStatus(messageId, status);
+    return RCIMClient.setMessageReceivedStatus(messageId, status);
 }
 
 /**
@@ -311,9 +312,9 @@ export function setMessageReceivedStatus(messageId: number, status: number): Pro
  * @param conversationTypeList 消息类型列表
  */
 export function getBlockedConversationList(
-  conversationTypeList: ConversationType[]
+    conversationTypeList: ConversationType[]
 ): Promise<Conversation[]> {
-  return RCIMClient.getBlockedConversationList(conversationTypeList);
+    return RCIMClient.getBlockedConversationList(conversationTypeList);
 }
 
 /**
@@ -324,11 +325,11 @@ export function getBlockedConversationList(
  * @param timestamp 该会话中已阅读点最后一条消息的发送时间戳
  */
 export function sendReadReceiptMessage(
-  conversationType: ConversationType,
-  targetId: string,
-  timestamp: number
+    conversationType: ConversationType,
+    targetId: string,
+    timestamp: number
 ) {
-  RCIMClient.sendReadReceiptMessage(conversationType, targetId, timestamp);
+    RCIMClient.sendReadReceiptMessage(conversationType, targetId, timestamp);
 }
 
 /**
@@ -337,7 +338,7 @@ export function sendReadReceiptMessage(
  * @param messageId 消息 ID
  */
 export function sendReadReceiptRequest(messageId: number): Promise<void> {
-  return RCIMClient.sendReadReceiptRequest(messageId);
+    return RCIMClient.sendReadReceiptRequest(messageId);
 }
 
 /**
@@ -348,18 +349,18 @@ export function sendReadReceiptRequest(messageId: number): Promise<void> {
  * @param messages 回执的消息列表
  */
 export function sendReadReceiptResponse(
-  conversationType: ConversationType,
-  targetId: string,
-  messages: Message[]
+    conversationType: ConversationType,
+    targetId: string,
+    messages: Message[]
 ): Promise<void> {
-  return RCIMClient.sendReadReceiptResponse(conversationType, targetId, messages);
+    return RCIMClient.sendReadReceiptResponse(conversationType, targetId, messages);
 }
 
 /**
  * 添加私聊阅读回执监听函数
  */
 export function addReadReceiptReceivedListener(listener: (message: Message) => void) {
-  return eventEmitter.addListener("rcimlib-read-receipt-received", listener);
+    return eventEmitter.addListener("rcimlib-read-receipt-received", listener);
 }
 
 /**
@@ -369,7 +370,7 @@ export function addReadReceiptReceivedListener(listener: (message: Message) => v
  * sendMessageReadReceiptResponse 接口发送已读响应
  */
 export function addReceiptRequestListener(listener: (data: ReceiptRequest) => void) {
-  return eventEmitter.addListener("rcimlib-receipt-request", listener);
+    return eventEmitter.addListener("rcimlib-receipt-request", listener);
 }
 
 /**
@@ -378,7 +379,7 @@ export function addReceiptRequestListener(listener: (data: ReceiptRequest) => vo
  * @param listener
  */
 export function addReceiptResponseListener(listener: (data: ReceiptResponse) => void) {
-  return eventEmitter.addListener("rcimlib-receipt-response", listener);
+    return eventEmitter.addListener("rcimlib-receipt-response", listener);
 }
 
 /**
@@ -387,7 +388,7 @@ export function addReceiptResponseListener(listener: (data: ReceiptResponse) => 
  * @param messageId 消息 ID
  */
 export function cancelSendMediaMessage(messageId: number): Promise<void> {
-  return RCIMClient.cancelSendMediaMessage(messageId);
+    return RCIMClient.cancelSendMediaMessage(messageId);
 }
 
 /**
@@ -396,14 +397,14 @@ export function cancelSendMediaMessage(messageId: number): Promise<void> {
  * @param messageId 消息 ID
  */
 export function cancelDownloadMediaMessage(messageId: number): Promise<void> {
-  return RCIMClient.cancelDownloadMediaMessage(messageId);
+    return RCIMClient.cancelDownloadMediaMessage(messageId);
 }
 
 export interface MediaMessageCallback {
-  progress?: (progress: number) => void;
-  success?: (path: string) => void;
-  error?: (errorCode: number) => void;
-  cancel?: () => void;
+    progress?: (progress: number) => void;
+    success?: (path: string) => void;
+    error?: (errorCode: number) => void;
+    cancel?: () => void;
 }
 
 /**
@@ -413,33 +414,33 @@ export interface MediaMessageCallback {
  * @param callback 回调
  */
 export function downloadMediaMessage(messageId: number, callback: MediaMessageCallback = {}) {
-  const eventId = Math.random().toString();
-  const listener = eventEmitter.addListener("rcimlib-download-media-message", data => {
-    if (callback) {
-      if (data.eventId === eventId) {
-        const { success, error, progress, cancel } = callback;
-        if (data.type === "success") {
-          success && success(data.path);
-          listener.remove();
-        } else if (data.type === "error") {
-          error && error(data.errorCode);
-          listener.remove();
-        } else if (data.type === "progress") {
-          progress && progress(data.progress);
-        } else if (data.type === "cancel") {
-          cancel && cancel();
+    const eventId = Math.random().toString();
+    const listener = eventEmitter.addListener("rcimlib-download-media-message", data => {
+        if (callback) {
+            if (data.eventId === eventId) {
+                const {success, error, progress, cancel} = callback;
+                if (data.type === "success") {
+                    success && success(data.path);
+                    listener.remove();
+                } else if (data.type === "error") {
+                    error && error(data.errorCode);
+                    listener.remove();
+                } else if (data.type === "progress") {
+                    progress && progress(data.progress);
+                } else if (data.type === "cancel") {
+                    cancel && cancel();
+                }
+            }
         }
-      }
-    }
-  });
-  RCIMClient.downloadMediaMessage(messageId, eventId);
+    });
+    RCIMClient.downloadMediaMessage(messageId, eventId);
 }
 
 /**
  * 添加连接状态监听函数
  */
 export function addConnectionStatusListener(listener: (status: ConnectionStatus) => void) {
-  return eventEmitter.addListener("rcimlib-connection-status", listener);
+    return eventEmitter.addListener("rcimlib-connection-status", listener);
 }
 
 /**
@@ -455,7 +456,7 @@ export function addConnectionStatusListener(listener: (status: ConnectionStatus)
  * @param enabled 是否踢出重连设备
  */
 export function setReconnectKickEnable(enabled: boolean) {
-  RCIMClient.setReconnectKickEnable(enabled);
+    RCIMClient.setReconnectKickEnable(enabled);
 }
 
 /**
@@ -472,12 +473,12 @@ export function setReconnectKickEnable(enabled: boolean) {
  * @param isForward 是否向前获取
  */
 export function getHistoryMessages(
-  conversationType: ConversationType,
-  targetId: string,
-  objectNames: ObjectName[],
-  timestamp: number,
-  count: number,
-  isForward: boolean
+    conversationType: ConversationType,
+    targetId: string,
+    objectNames: ObjectName[],
+    timestamp: number,
+    count: number,
+    isForward: boolean
 ): Promise<Message[]>;
 
 /**
@@ -494,52 +495,52 @@ export function getHistoryMessages(
  * @param isForward 是否向前获取
  */
 export function getHistoryMessages(
-  conversationType: ConversationType,
-  targetId: string,
-  objectName: string,
-  baseMessageId: number,
-  count: number,
-  isForward: boolean
+    conversationType: ConversationType,
+    targetId: string,
+    objectName: string,
+    baseMessageId: number,
+    count: number,
+    isForward: boolean
 ): Promise<Message[]>;
 
 export function getHistoryMessages(
-  conversationType: ConversationType,
-  targetId: string,
-  objectName: string | ObjectName[] = null,
-  baseMessageId = -1,
-  count = 10,
-  isForward = true
+    conversationType: ConversationType,
+    targetId: string,
+    objectName: string | ObjectName[] = null,
+    baseMessageId = -1,
+    count = 10,
+    isForward = true
 ): Promise<Message[]> {
-  if (Array.isArray(objectName)) {
-    return RCIMClient.getHistoryMessagesByTimestamp(
-      conversationType,
-      targetId,
-      objectName,
-      baseMessageId,
-      count,
-      isForward
-    );
-  } else {
-    return RCIMClient.getHistoryMessages(
-      conversationType,
-      targetId,
-      objectName,
-      baseMessageId,
-      count,
-      isForward
-    );
-  }
+    if (Array.isArray(objectName)) {
+        return RCIMClient.getHistoryMessagesByTimestamp(
+            conversationType,
+            targetId,
+            objectName,
+            baseMessageId,
+            count,
+            isForward
+        );
+    } else {
+        return RCIMClient.getHistoryMessages(
+            conversationType,
+            targetId,
+            objectName,
+            baseMessageId,
+            count,
+            isForward
+        );
+    }
 }
 
 /**
  * 消息内容兼容性处理
  */
 function handleMessageContent(content: MessageContent) {
-  if (!content.objectName) {
-    // @ts-ignore
-    content.objectName = MessageObjectNames[content.type];
-  }
-  return content;
+    if (!content.objectName) {
+        // @ts-ignore
+        content.objectName = MessageObjectNames[content.type];
+    }
+    return content;
 }
 
 /**
@@ -552,19 +553,19 @@ function handleMessageContent(content: MessageContent) {
  * @param sentTime
  */
 export function insertOutgoingMessage(
-  conversationType: ConversationType,
-  targetId: string,
-  sentStatus: SentStatus,
-  messageContent: MessageContent,
-  sentTime = 0
+    conversationType: ConversationType,
+    targetId: string,
+    sentStatus: SentStatus,
+    messageContent: MessageContent,
+    sentTime = 0
 ): Promise<Message> {
-  return RCIMClient.insertOutgoingMessage(
-    conversationType,
-    targetId,
-    sentStatus,
-    handleMessageContent(messageContent),
-    sentTime
-  );
+    return RCIMClient.insertOutgoingMessage(
+        conversationType,
+        targetId,
+        sentStatus,
+        handleMessageContent(messageContent),
+        sentTime
+    );
 }
 
 /**
@@ -578,21 +579,21 @@ export function insertOutgoingMessage(
  * @param sentTime
  */
 export function insertIncomingMessage(
-  conversationType: ConversationType,
-  targetId: string,
-  senderUserId: string,
-  receivedStatus: number,
-  messageContent: MessageContent,
-  sentTime = 0
+    conversationType: ConversationType,
+    targetId: string,
+    senderUserId: string,
+    receivedStatus: number,
+    messageContent: MessageContent,
+    sentTime = 0
 ): Promise<Message> {
-  return RCIMClient.insertIncomingMessage(
-    conversationType,
-    targetId,
-    senderUserId,
-    receivedStatus,
-    handleMessageContent(messageContent),
-    sentTime
-  );
+    return RCIMClient.insertIncomingMessage(
+        conversationType,
+        targetId,
+        senderUserId,
+        receivedStatus,
+        handleMessageContent(messageContent),
+        sentTime
+    );
 }
 
 /**
@@ -602,10 +603,10 @@ export function insertIncomingMessage(
  * @param targetId
  */
 export function clearMessages(
-  conversationType: ConversationType,
-  targetId: string
+    conversationType: ConversationType,
+    targetId: string
 ): Promise<boolean> {
-  return RCIMClient.clearMessages(conversationType, targetId);
+    return RCIMClient.clearMessages(conversationType, targetId);
 }
 
 /**
@@ -615,8 +616,8 @@ export function clearMessages(
  * @param targetId
  */
 export function deleteMessages(
-  conversationType: ConversationType,
-  targetId: string
+    conversationType: ConversationType,
+    targetId: string
 ): Promise<boolean>;
 
 /**
@@ -627,13 +628,13 @@ export function deleteMessages(
 export function deleteMessages(ids: number[]): Promise<boolean>;
 
 export function deleteMessages(
-  typeOrIds: ConversationType | number[],
-  targetId = ""
+    typeOrIds: ConversationType | number[],
+    targetId = ""
 ): Promise<boolean> {
-  if (Array.isArray(typeOrIds)) {
-    return RCIMClient.deleteMessagesByIds(typeOrIds);
-  }
-  return RCIMClient.deleteMessages(typeOrIds, targetId);
+    if (Array.isArray(typeOrIds)) {
+        return RCIMClient.deleteMessagesByIds(typeOrIds);
+    }
+    return RCIMClient.deleteMessages(typeOrIds, targetId);
 }
 
 /**
@@ -644,11 +645,11 @@ export function deleteMessages(
  * @param objectNames 对象名称数组
  */
 export function searchConversations(
-  keyword: string,
-  conversationTypes: ConversationType[],
-  objectNames: ObjectName[]
+    keyword: string,
+    conversationTypes: ConversationType[],
+    objectNames: ObjectName[]
 ): Promise<SearchConversationResult[]> {
-  return RCIMClient.searchConversations(keyword, conversationTypes, objectNames);
+    return RCIMClient.searchConversations(keyword, conversationTypes, objectNames);
 }
 
 /**
@@ -661,13 +662,13 @@ export function searchConversations(
  * @param startTime 开始时间
  */
 export function searchMessages(
-  conversationType: ConversationType,
-  targetId: string,
-  keyword: string,
-  count: number,
-  startTime = 0
+    conversationType: ConversationType,
+    targetId: string,
+    keyword: string,
+    count: number,
+    startTime = 0
 ): Promise<Message[]> {
-  return RCIMClient.searchMessages(conversationType, targetId, keyword, count, startTime);
+    return RCIMClient.searchMessages(conversationType, targetId, keyword, count, startTime);
 }
 
 /**
@@ -676,7 +677,7 @@ export function searchMessages(
  * @param messageId 消息 ID
  */
 export function getMessage(messageId: number): Promise<Message> {
-  return RCIMClient.getMessage(messageId);
+    return RCIMClient.getMessage(messageId);
 }
 
 /**
@@ -685,7 +686,7 @@ export function getMessage(messageId: number): Promise<Message> {
  * @param messageUId 消息 UID
  */
 export function getMessageByUId(messageUId: string): Promise<Message> {
-  return RCIMClient.getMessageByUId(messageUId);
+    return RCIMClient.getMessageByUId(messageUId);
 }
 
 /**
@@ -695,7 +696,7 @@ export function getMessageByUId(messageUId: string): Promise<Message> {
  * @param extra 附加信息
  */
 export function setMessageExtra(messageId: number, extra: string): Promise<void> {
-  return RCIMClient.setMessageExtra(messageId, extra);
+    return RCIMClient.setMessageExtra(messageId, extra);
 }
 
 /**
@@ -704,7 +705,7 @@ export function setMessageExtra(messageId: number, extra: string): Promise<void>
  * @param messageId 消息 ID
  */
 export function getMessageSendTime(messageId: number): Promise<number> {
-  return RCIMClient.getMessageSendTime(messageId);
+    return RCIMClient.getMessageSendTime(messageId);
 }
 
 /**
@@ -714,10 +715,10 @@ export function getMessageSendTime(messageId: number): Promise<number> {
  * @param targetId 目标 ID
  */
 export function getMessageCount(
-  conversationType: ConversationType,
-  targetId: string
+    conversationType: ConversationType,
+    targetId: string
 ): Promise<number> {
-  return RCIMClient.getMessageCount(conversationType, targetId);
+    return RCIMClient.getMessageCount(conversationType, targetId);
 }
 
 /**
@@ -727,10 +728,10 @@ export function getMessageCount(
  * @param targetId 目标 ID
  */
 export function getFirstUnreadMessage(
-  conversationType: ConversationType,
-  targetId: string
+    conversationType: ConversationType,
+    targetId: string
 ): Promise<Message> {
-  return RCIMClient.getFirstUnreadMessage(conversationType, targetId);
+    return RCIMClient.getFirstUnreadMessage(conversationType, targetId);
 }
 
 /**
@@ -740,10 +741,10 @@ export function getFirstUnreadMessage(
  * @param targetId 目标 ID
  */
 export function getUnreadMentionedMessages(
-  conversationType: ConversationType,
-  targetId: string
+    conversationType: ConversationType,
+    targetId: string
 ): Promise<Message[]> {
-  return RCIMClient.getUnreadMentionedMessages(conversationType, targetId);
+    return RCIMClient.getUnreadMentionedMessages(conversationType, targetId);
 }
 
 /**
@@ -755,12 +756,12 @@ export function getUnreadMentionedMessages(
  * @param count 删除数量
  */
 export function getRemoteHistoryMessages(
-  conversationType: ConversationType,
-  targetId: string,
-  sentTime: number,
-  count: number
+    conversationType: ConversationType,
+    targetId: string,
+    sentTime: number,
+    count: number
 ): Promise<Message[]> {
-  return RCIMClient.getRemoteHistoryMessages(conversationType, targetId, sentTime, count);
+    return RCIMClient.getRemoteHistoryMessages(conversationType, targetId, sentTime, count);
 }
 
 /**
@@ -771,11 +772,11 @@ export function getRemoteHistoryMessages(
  * @param recordTime 清除消息截止时间戳，为 0 则清除会话所有服务端历史消息
  */
 export function cleanRemoteHistoryMessages(
-  conversationType: ConversationType,
-  targetId: string,
-  recordTime: number
+    conversationType: ConversationType,
+    targetId: string,
+    recordTime: number
 ): Promise<boolean> {
-  return RCIMClient.cleanRemoteHistoryMessages(conversationType, targetId, recordTime);
+    return RCIMClient.cleanRemoteHistoryMessages(conversationType, targetId, recordTime);
 }
 
 /**
@@ -787,12 +788,12 @@ export function cleanRemoteHistoryMessages(
  * @param clearRemote 是否同时删除服务端消息
  */
 export function cleanHistoryMessages(
-  conversationType: ConversationType,
-  targetId: string,
-  recordTime: number,
-  clearRemote: boolean
+    conversationType: ConversationType,
+    targetId: string,
+    recordTime: number,
+    clearRemote: boolean
 ): Promise<boolean> {
-  return RCIMClient.cleanHistoryMessages(conversationType, targetId, recordTime, clearRemote);
+    return RCIMClient.cleanHistoryMessages(conversationType, targetId, recordTime, clearRemote);
 }
 
 /**
@@ -803,11 +804,11 @@ export function cleanHistoryMessages(
  * @param messages 要删除的消息数组，数组大小不能超过 100 条
  */
 export function deleteRemoteMessages(
-  conversationType: ConversationType,
-  targetId: string,
-  messages: Message[]
+    conversationType: ConversationType,
+    targetId: string,
+    messages: Message[]
 ): Promise<boolean> {
-  return RCIMClient.deleteRemoteMessages(conversationType, targetId, messages);
+    return RCIMClient.deleteRemoteMessages(conversationType, targetId, messages);
 }
 
 /**
@@ -817,10 +818,10 @@ export function deleteRemoteMessages(
  * @param targetId 目标 ID
  */
 export function getConversation(
-  conversationType: ConversationType,
-  targetId: string
+    conversationType: ConversationType,
+    targetId: string
 ): Promise<Conversation> {
-  return RCIMClient.getConversation(conversationType, targetId);
+    return RCIMClient.getConversation(conversationType, targetId);
 }
 
 /**
@@ -832,11 +833,11 @@ export function getConversation(
  *     表示从最新开始获取）
  */
 export function getConversationList(
-  conversationTypes: ConversationType[] = [],
-  count = 0,
-  timestamp = 0
+    conversationTypes: ConversationType[] = [],
+    count = 0,
+    timestamp = 0
 ): Promise<Conversation[]> {
-  return RCIMClient.getConversationList(conversationTypes, count, timestamp);
+    return RCIMClient.getConversationList(conversationTypes, count, timestamp);
 }
 
 /**
@@ -846,10 +847,10 @@ export function getConversationList(
  * @param targetId 目标 ID
  */
 export function removeConversation(
-  conversationType: ConversationType,
-  targetId: string
+    conversationType: ConversationType,
+    targetId: string
 ): Promise<Conversation> {
-  return RCIMClient.removeConversation(conversationType, targetId);
+    return RCIMClient.removeConversation(conversationType, targetId);
 }
 
 /**
@@ -860,11 +861,11 @@ export function removeConversation(
  * @param isBlock 是否屏蔽
  */
 export function setConversationNotificationStatus(
-  conversationType: ConversationType,
-  targetId: string,
-  isBlock: boolean
+    conversationType: ConversationType,
+    targetId: string,
+    isBlock: boolean
 ): Promise<Conversation> {
-  return RCIMClient.setConversationNotificationStatus(conversationType, targetId, isBlock);
+    return RCIMClient.setConversationNotificationStatus(conversationType, targetId, isBlock);
 }
 
 /**
@@ -874,10 +875,10 @@ export function setConversationNotificationStatus(
  * @param targetId 目标 ID
  */
 export function getConversationNotificationStatus(
-  conversationType: ConversationType,
-  targetId: string
+    conversationType: ConversationType,
+    targetId: string
 ): Promise<boolean> {
-  return RCIMClient.getConversationNotificationStatus(conversationType, targetId);
+    return RCIMClient.getConversationNotificationStatus(conversationType, targetId);
 }
 
 /**
@@ -888,11 +889,11 @@ export function getConversationNotificationStatus(
  * @param isTop 是否置顶
  */
 export function setConversationToTop(
-  conversationType: ConversationType,
-  targetId: string,
-  isTop: boolean
+    conversationType: ConversationType,
+    targetId: string,
+    isTop: boolean
 ) {
-  return RCIMClient.setConversationToTop(conversationType, targetId, isTop);
+    return RCIMClient.setConversationToTop(conversationType, targetId, isTop);
 }
 
 /**
@@ -901,9 +902,9 @@ export function setConversationToTop(
  * @param conversationTypes 会话类型列表
  */
 export function getTopConversationList(
-  conversationTypes: ConversationType[] = []
+    conversationTypes: ConversationType[] = []
 ): Promise<Conversation[]> {
-  return RCIMClient.getTopConversationList(conversationTypes);
+    return RCIMClient.getTopConversationList(conversationTypes);
 }
 
 /**
@@ -914,11 +915,11 @@ export function getTopConversationList(
  * @param content 草稿内容
  */
 export function saveTextMessageDraft(
-  conversationType: ConversationType,
-  targetId: string,
-  content: string
+    conversationType: ConversationType,
+    targetId: string,
+    content: string
 ): Promise<boolean> {
-  return RCIMClient.saveTextMessageDraft(conversationType, targetId, content);
+    return RCIMClient.saveTextMessageDraft(conversationType, targetId, content);
 }
 
 /**
@@ -928,10 +929,10 @@ export function saveTextMessageDraft(
  * @param targetId 目标 ID
  */
 export function getTextMessageDraft(
-  conversationType: ConversationType,
-  targetId: string
+    conversationType: ConversationType,
+    targetId: string
 ): Promise<string> {
-  return RCIMClient.getTextMessageDraft(conversationType, targetId);
+    return RCIMClient.getTextMessageDraft(conversationType, targetId);
 }
 
 /**
@@ -941,17 +942,17 @@ export function getTextMessageDraft(
  * @param targetId 目标 ID
  */
 export function clearTextMessageDraft(
-  conversationType: ConversationType,
-  targetId: string
+    conversationType: ConversationType,
+    targetId: string
 ): Promise<string> {
-  return RCIMClient.clearTextMessageDraft(conversationType, targetId);
+    return RCIMClient.clearTextMessageDraft(conversationType, targetId);
 }
 
 /**
  * 获取所有未读消息数
  */
 export function getTotalUnreadCount(): Promise<number> {
-  return RCIMClient.getTotalUnreadCount();
+    return RCIMClient.getTotalUnreadCount();
 }
 
 /**
@@ -968,18 +969,18 @@ export function getUnreadCount(conversationTypes: ConversationType[]): Promise<n
  * @param targetId 目标 ID
  */
 export function getUnreadCount(
-  conversationType: ConversationType,
-  targetId: string
+    conversationType: ConversationType,
+    targetId: string
 ): Promise<number>;
 
 export function getUnreadCount(
-  conversationType: ConversationType | ConversationType[],
-  targetId = ""
+    conversationType: ConversationType | ConversationType[],
+    targetId = ""
 ): Promise<number> {
-  if (Array.isArray(conversationType)) {
-    return RCIMClient.getUnreadCount(0, "", conversationType);
-  }
-  return RCIMClient.getUnreadCount(conversationType, targetId, []);
+    if (Array.isArray(conversationType)) {
+        return RCIMClient.getUnreadCount(0, "", conversationType);
+    }
+    return RCIMClient.getUnreadCount(conversationType, targetId, []);
 }
 
 /**
@@ -990,11 +991,11 @@ export function getUnreadCount(
  * @param time 该会话已阅读的最后一条消息的发送时间戳
  */
 export function clearMessagesUnreadStatus(
-  conversationType: ConversationType,
-  targetId: string,
-  time = 0
+    conversationType: ConversationType,
+    targetId: string,
+    time = 0
 ): Promise<boolean> {
-  return RCIMClient.clearMessagesUnreadStatus(conversationType, targetId, time);
+    return RCIMClient.clearMessagesUnreadStatus(conversationType, targetId, time);
 }
 
 /**
@@ -1003,7 +1004,7 @@ export function clearMessagesUnreadStatus(
  * @param userId 用户 ID
  */
 export function addToBlacklist(userId: string): Promise<void> {
-  return RCIMClient.addToBlacklist(userId);
+    return RCIMClient.addToBlacklist(userId);
 }
 
 /**
@@ -1012,7 +1013,7 @@ export function addToBlacklist(userId: string): Promise<void> {
  * @param userId 用户 ID
  */
 export function removeFromBlacklist(userId: string): Promise<void> {
-  return RCIMClient.removeFromBlacklist(userId);
+    return RCIMClient.removeFromBlacklist(userId);
 }
 
 /**
@@ -1022,7 +1023,7 @@ export function removeFromBlacklist(userId: string): Promise<void> {
  * @return 是否在黑名单中
  */
 export function getBlacklistStatus(userId: string): Promise<boolean> {
-  return RCIMClient.getBlacklistStatus(userId);
+    return RCIMClient.getBlacklistStatus(userId);
 }
 
 /**
@@ -1031,7 +1032,7 @@ export function getBlacklistStatus(userId: string): Promise<boolean> {
  * @return 黑名单列表
  */
 export function getBlacklist(): Promise<string[]> {
-  return RCIMClient.getBlacklist();
+    return RCIMClient.getBlacklist();
 }
 
 /**
@@ -1041,7 +1042,7 @@ export function getBlacklist(): Promise<string[]> {
  * @param messageCount 默认获取的消息数量，最多 50
  */
 export function joinChatRoom(targetId: string, messageCount = 10): Promise<void> {
-  return RCIMClient.joinChatRoom(targetId, messageCount);
+    return RCIMClient.joinChatRoom(targetId, messageCount);
 }
 
 /**
@@ -1051,7 +1052,7 @@ export function joinChatRoom(targetId: string, messageCount = 10): Promise<void>
  * @param messageCount 默认获取的消息数量，最多 50
  */
 export function joinExistChatRoom(targetId: string, messageCount = 10): Promise<void> {
-  return RCIMClient.joinExistChatRoom(targetId, messageCount);
+    return RCIMClient.joinExistChatRoom(targetId, messageCount);
 }
 
 /**
@@ -1060,7 +1061,7 @@ export function joinExistChatRoom(targetId: string, messageCount = 10): Promise<
  * @param targetId 聊天室 ID
  */
 export function quitChatRoom(targetId: string): Promise<void> {
-  return RCIMClient.quitChatRoom(targetId);
+    return RCIMClient.quitChatRoom(targetId);
 }
 
 /**
@@ -1072,12 +1073,12 @@ export function quitChatRoom(targetId: string): Promise<void> {
  * @param order 拉取顺序
  */
 export function getRemoteChatRoomHistoryMessages(
-  targetId: string,
-  recordTime: number,
-  count: number,
-  order: TimestampOrder
+    targetId: string,
+    recordTime: number,
+    count: number,
+    order: TimestampOrder
 ): Promise<{ messages: Message[]; syncTime: number }> {
-  return RCIMClient.getRemoteChatRoomHistoryMessages(targetId, recordTime, count, order);
+    return RCIMClient.getRemoteChatRoomHistoryMessages(targetId, recordTime, count, order);
 }
 
 /**
@@ -1088,11 +1089,11 @@ export function getRemoteChatRoomHistoryMessages(
  * @param order 返回的聊天室成员排序方式
  */
 export function getChatRoomInfo(
-  targetId: string,
-  memberCount: number = 20,
-  order: ChatRoomMemberOrder = ChatRoomMemberOrder.ASC
+    targetId: string,
+    memberCount: number = 20,
+    order: ChatRoomMemberOrder = ChatRoomMemberOrder.ASC
 ): Promise<ChatRoomInfo> {
-  return RCIMClient.getChatRoomInfo(targetId, memberCount, order);
+    return RCIMClient.getChatRoomInfo(targetId, memberCount, order);
 }
 
 /**
@@ -1102,7 +1103,7 @@ export function getChatRoomInfo(
  * @param userList 用户 ID 列表
  */
 export function createDiscussion(name: string, userList: string[]): Promise<string> {
-  return RCIMClient.createDiscussion(name, userList);
+    return RCIMClient.createDiscussion(name, userList);
 }
 
 /**
@@ -1111,7 +1112,7 @@ export function createDiscussion(name: string, userList: string[]): Promise<stri
  * @param targetId 讨论组 ID
  */
 export function getDiscussion(targetId: string): Promise<Discussion> {
-  return RCIMClient.getDiscussion(targetId);
+    return RCIMClient.getDiscussion(targetId);
 }
 
 /**
@@ -1120,7 +1121,7 @@ export function getDiscussion(targetId: string): Promise<Discussion> {
  * @param targetId 讨论组 ID
  */
 export function quitDiscussion(targetId: string): Promise<void> {
-  return RCIMClient.quitDiscussion(targetId);
+    return RCIMClient.quitDiscussion(targetId);
 }
 
 /**
@@ -1130,7 +1131,7 @@ export function quitDiscussion(targetId: string): Promise<void> {
  * @param userList 用户 ID 列表
  */
 export function addMemberToDiscussion(targetId: string, userList: string[]): Promise<void> {
-  return RCIMClient.addMemberToDiscussion(targetId, userList);
+    return RCIMClient.addMemberToDiscussion(targetId, userList);
 }
 
 /**
@@ -1140,7 +1141,7 @@ export function addMemberToDiscussion(targetId: string, userList: string[]): Pro
  * @param user 用户 ID
  */
 export function removeMemberFromDiscussion(targetId: string, user: string): Promise<void> {
-  return RCIMClient.removeMemberFromDiscussion(targetId, user);
+    return RCIMClient.removeMemberFromDiscussion(targetId, user);
 }
 
 /**
@@ -1150,7 +1151,7 @@ export function removeMemberFromDiscussion(targetId: string, user: string): Prom
  * @param name 讨论组名称
  */
 export function setDiscussionName(targetId: string, name: string): Promise<void> {
-  return RCIMClient.setDiscussionName(targetId, name);
+    return RCIMClient.setDiscussionName(targetId, name);
 }
 
 /**
@@ -1160,7 +1161,7 @@ export function setDiscussionName(targetId: string, name: string): Promise<void>
  * @param isOpen 是否开放拉人权限
  */
 export function setDiscussionInviteStatus(targetId: string, isOpen: boolean): Promise<void> {
-  return RCIMClient.setDiscussionInviteStatus(targetId, isOpen);
+    return RCIMClient.setDiscussionInviteStatus(targetId, isOpen);
 }
 
 /**
@@ -1171,11 +1172,11 @@ export function setDiscussionInviteStatus(targetId: string, isOpen: boolean): Pr
  * @param publicServiceType 公众服务类型
  */
 export function searchPublicService(
-  keyword: string,
-  searchType: SearchType = SearchType.FUZZY,
-  publicServiceType: PublicServiceType = 0
+    keyword: string,
+    searchType: SearchType = SearchType.FUZZY,
+    publicServiceType: PublicServiceType = 0
 ): Promise<PublicServiceProfile[]> {
-  return RCIMClient.searchPublicService(keyword, searchType, publicServiceType);
+    return RCIMClient.searchPublicService(keyword, searchType, publicServiceType);
 }
 
 /**
@@ -1185,10 +1186,10 @@ export function searchPublicService(
  * @param publicServiceId 公共服务 ID
  */
 export function subscribePublicService(
-  publicServiceType: PublicServiceType,
-  publicServiceId: string
+    publicServiceType: PublicServiceType,
+    publicServiceId: string
 ): Promise<void> {
-  return RCIMClient.subscribePublicService(publicServiceType, publicServiceId);
+    return RCIMClient.subscribePublicService(publicServiceType, publicServiceId);
 }
 
 /**
@@ -1198,17 +1199,17 @@ export function subscribePublicService(
  * @param publicServiceId 公共服务 ID
  */
 export function unsubscribePublicService(
-  publicServiceType: PublicServiceType,
-  publicServiceId: string
+    publicServiceType: PublicServiceType,
+    publicServiceId: string
 ): Promise<void> {
-  return RCIMClient.unsubscribePublicService(publicServiceType, publicServiceId);
+    return RCIMClient.unsubscribePublicService(publicServiceType, publicServiceId);
 }
 
 /**
  * 获取已订阅的公众服务列表
  */
 export function getPublicServiceList(): Promise<PublicServiceProfile[]> {
-  return RCIMClient.getPublicServiceList();
+    return RCIMClient.getPublicServiceList();
 }
 
 /**
@@ -1218,10 +1219,10 @@ export function getPublicServiceList(): Promise<PublicServiceProfile[]> {
  * @param publicServiceId 公共服务 ID
  */
 export function getPublicServiceProfile(
-  publicServiceType: PublicServiceType,
-  publicServiceId: string
+    publicServiceType: PublicServiceType,
+    publicServiceId: string
 ): Promise<PublicServiceProfile> {
-  return RCIMClient.getPublicServiceProfile(publicServiceType, publicServiceId);
+    return RCIMClient.getPublicServiceProfile(publicServiceType, publicServiceId);
 }
 
 /**
@@ -1231,7 +1232,7 @@ export function getPublicServiceProfile(
  * @param targetId 目标 ID
  */
 export function startRealTimeLocation(conversationType: ConversationType, targetId: string) {
-  return RCIMClient.startRealTimeLocation(conversationType, targetId);
+    return RCIMClient.startRealTimeLocation(conversationType, targetId);
 }
 
 /**
@@ -1241,7 +1242,7 @@ export function startRealTimeLocation(conversationType: ConversationType, target
  * @param targetId 目标 ID
  */
 export function joinRealTimeLocation(conversationType: ConversationType, targetId: string) {
-  return RCIMClient.joinRealTimeLocation(conversationType, targetId);
+    return RCIMClient.joinRealTimeLocation(conversationType, targetId);
 }
 
 /**
@@ -1251,7 +1252,7 @@ export function joinRealTimeLocation(conversationType: ConversationType, targetI
  * @param targetId 目标 ID
  */
 export function quitRealTimeLocation(conversationType: ConversationType, targetId: string) {
-  return RCIMClient.quitRealTimeLocation(conversationType, targetId);
+    return RCIMClient.quitRealTimeLocation(conversationType, targetId);
 }
 
 /**
@@ -1261,10 +1262,10 @@ export function quitRealTimeLocation(conversationType: ConversationType, targetI
  * @param targetId 目标 ID
  */
 export function getRealTimeLocationStatus(
-  conversationType: ConversationType,
-  targetId: string
+    conversationType: ConversationType,
+    targetId: string
 ): Promise<RealTimeLocationStatus> {
-  return RCIMClient.getRealTimeLocationStatus(conversationType, targetId);
+    return RCIMClient.getRealTimeLocationStatus(conversationType, targetId);
 }
 
 /**
@@ -1274,10 +1275,10 @@ export function getRealTimeLocationStatus(
  * @param targetId 目标 ID
  */
 export function getRealTimeLocationParticipants(
-  conversationType: ConversationType,
-  targetId: string
+    conversationType: ConversationType,
+    targetId: string
 ): Promise<string[]> {
-  return RCIMClient.getRealTimeLocationParticipants(conversationType, targetId);
+    return RCIMClient.getRealTimeLocationParticipants(conversationType, targetId);
 }
 
 /**
@@ -1287,47 +1288,47 @@ export function getRealTimeLocationParticipants(
  * @param spanMinutes 需要屏蔽消息提醒的分钟数，0 < spanMinutes < 1440
  */
 export function setNotificationQuietHours(startTime: string, spanMinutes: number): Promise<void> {
-  return RCIMClient.setNotificationQuietHours(startTime, spanMinutes);
+    return RCIMClient.setNotificationQuietHours(startTime, spanMinutes);
 }
 
 /**
  * 查询已设置的全局时间段消息提醒屏蔽
  */
 export function getNotificationQuietHours(): Promise<{ startTime: string; spanMinutes: number }> {
-  return RCIMClient.getNotificationQuietHours();
+    return RCIMClient.getNotificationQuietHours();
 }
 
 /**
  * 删除已设置的全局时间段消息提醒屏蔽
  */
 export function removeNotificationQuietHours(): Promise<void> {
-  return RCIMClient.removeNotificationQuietHours();
+    return RCIMClient.removeNotificationQuietHours();
 }
 
 /**
  * 获取离线消息在服务端的存储时间（以天为单位）
  */
 export function getOfflineMessageDuration(): Promise<number> {
-  return RCIMClient.getOfflineMessageDuration();
+    return RCIMClient.getOfflineMessageDuration();
 }
 
 /**
  * 设置离线消息在服务端的存储时间（以天为单位）
  */
 export async function setOfflineMessageDuration(duration: number): Promise<number> {
-  return parseInt(await RCIMClient.setOfflineMessageDuration(duration));
+    return parseInt(await RCIMClient.setOfflineMessageDuration(duration));
 }
 
 /**
  * 发起客服聊天回调
  */
 export interface CSCallback {
-  success?: (config: CSConfig) => void;
-  error?: (code: number, message: string) => void;
-  modeChanged?: (mode: CSMode) => void;
-  pullEvaluation?: (dialogId: string) => void;
-  quit?: (message: string) => void;
-  selectGroup?: (groups: CSGroupItem[]) => void;
+    success?: (config: CSConfig) => void;
+    error?: (code: number, message: string) => void;
+    modeChanged?: (mode: CSMode) => void;
+    pullEvaluation?: (dialogId: string) => void;
+    quit?: (message: string) => void;
+    selectGroup?: (groups: CSGroupItem[]) => void;
 }
 
 /**
@@ -1338,30 +1339,30 @@ export interface CSCallback {
  * @param callback 回调
  */
 export function startCustomerService(kefuId: string, csInfo: CSInfo, callback: CSCallback = null) {
-  const eventId = Math.random().toString();
-  if (callback) {
-    const { success, error, modeChanged, selectGroup, pullEvaluation, quit } = callback;
-    const listener = eventEmitter.addListener("rcimlib-customer-service", data => {
-      if (data.eventId === eventId) {
-        if (data.type === "success") {
-          success && success(data.config);
-        } else if (data.type === "error") {
-          error && error(data.errorCode, data.errorMessage);
-          listener.remove();
-        } else if (data.type === "mode-changed") {
-          modeChanged && modeChanged(data.mode);
-        } else if (data.type === "pull-evaluation") {
-          pullEvaluation && pullEvaluation(data.dialogId);
-        } else if (data.type === "select-group") {
-          selectGroup && selectGroup(data.groups);
-        } else if (data.type === "quit") {
-          quit && quit(data.message);
-          listener.remove();
-        }
-      }
-    });
-  }
-  RCIMClient.startCustomerService(kefuId, csInfo, eventId);
+    const eventId = Math.random().toString();
+    if (callback) {
+        const {success, error, modeChanged, selectGroup, pullEvaluation, quit} = callback;
+        const listener = eventEmitter.addListener("rcimlib-customer-service", data => {
+            if (data.eventId === eventId) {
+                if (data.type === "success") {
+                    success && success(data.config);
+                } else if (data.type === "error") {
+                    error && error(data.errorCode, data.errorMessage);
+                    listener.remove();
+                } else if (data.type === "mode-changed") {
+                    modeChanged && modeChanged(data.mode);
+                } else if (data.type === "pull-evaluation") {
+                    pullEvaluation && pullEvaluation(data.dialogId);
+                } else if (data.type === "select-group") {
+                    selectGroup && selectGroup(data.groups);
+                } else if (data.type === "quit") {
+                    quit && quit(data.message);
+                    listener.remove();
+                }
+            }
+        });
+    }
+    RCIMClient.startCustomerService(kefuId, csInfo, eventId);
 }
 
 /**
@@ -1370,7 +1371,7 @@ export function startCustomerService(kefuId: string, csInfo: CSInfo, callback: C
  * @param kefuId 客服 ID
  */
 export function switchToHumanMode(kefuId: string) {
-  RCIMClient.switchToHumanMode(kefuId);
+    RCIMClient.switchToHumanMode(kefuId);
 }
 
 /**
@@ -1380,7 +1381,7 @@ export function switchToHumanMode(kefuId: string) {
  * @param groupId 分组 ID
  */
 export function selectCustomerServiceGroup(kefuId: string, groupId: string) {
-  RCIMClient.selectCustomServiceGroup(kefuId, groupId);
+    RCIMClient.selectCustomServiceGroup(kefuId, groupId);
 }
 
 /**
@@ -1395,23 +1396,23 @@ export function selectCustomerServiceGroup(kefuId: string, groupId: string) {
  * @param extra 用于扩展的额外信息
  */
 export function evaluateCustomerService(
-  kefuId: string,
-  dialogId: string,
-  value: string,
-  suggest: string,
-  resolveStatus: CSResolveStatus,
-  tagText = null,
-  extra = null
+    kefuId: string,
+    dialogId: string,
+    value: string,
+    suggest: string,
+    resolveStatus: CSResolveStatus,
+    tagText = null,
+    extra = null
 ) {
-  RCIMClient.evaluateCustomerService(
-    kefuId,
-    dialogId,
-    value,
-    suggest,
-    resolveStatus,
-    tagText,
-    extra
-  );
+    RCIMClient.evaluateCustomerService(
+        kefuId,
+        dialogId,
+        value,
+        suggest,
+        resolveStatus,
+        tagText,
+        extra
+    );
 }
 
 /**
@@ -1421,10 +1422,10 @@ export function evaluateCustomerService(
  * @param message 客服留言信息
  */
 export function leaveMessageCustomerService(
-  kefuId: string,
-  message: CSLeaveMessageItem
+    kefuId: string,
+    message: CSLeaveMessageItem
 ): Promise<void> {
-  return RCIMClient.leaveMessageCustomerService(kefuId, message);
+    return RCIMClient.leaveMessageCustomerService(kefuId, message);
 }
 
 /**
@@ -1433,14 +1434,14 @@ export function leaveMessageCustomerService(
  * @param kefuId 客服 ID
  */
 export function stopCustomerService(kefuId: string) {
-  RCIMClient.stopCustomerService(kefuId);
+    RCIMClient.stopCustomerService(kefuId);
 }
 
 /**
  * 获取当前用户 ID
  */
 export function getCurrentUserId(): Promise<string> {
-  return RCIMClient.getCurrentUserId();
+    return RCIMClient.getCurrentUserId();
 }
 
 /**
@@ -1449,7 +1450,7 @@ export function getCurrentUserId(): Promise<string> {
  * @param language 推送语言
  */
 export function setPushLanguage(language: PushLanguage): Promise<void> {
-  return RCIMClient.setPushLanguage(language);
+    return RCIMClient.setPushLanguage(language);
 }
 
 /**
@@ -1458,14 +1459,14 @@ export function setPushLanguage(language: PushLanguage): Promise<void> {
  * @param isShowPushContent 是否显示内容详情
  */
 export function setPushContentShowStatus(isShowPushContent: boolean): Promise<void> {
-  return RCIMClient.setPushContentShowStatus(isShowPushContent);
+    return RCIMClient.setPushContentShowStatus(isShowPushContent);
 }
 
 /**
  * 查询是否显示内容详情
  */
 export function getPushContentShowStatus(): Promise<boolean> {
-  return RCIMClient.getPushContentShowStatus();
+    return RCIMClient.getPushContentShowStatus();
 }
 
 /**
@@ -1474,5 +1475,5 @@ export function getPushContentShowStatus(): Promise<boolean> {
  * @param listener
  */
 export function addPushArrivedListener(listener: (message: PushNotificationMessage) => void) {
-  return eventEmitter.addListener("rcimlib-push-arrived", listener);
+    return eventEmitter.addListener("rcimlib-push-arrived", listener);
 }
